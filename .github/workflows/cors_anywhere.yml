@@ -1,61 +1,36 @@
-name: Run Cors Anywhere
+name: Run cors-anywhere
 
 on:
   push:
     branches:
-      - main  # Ana dalda yapılan her push işlemi için
+      - main  # Ana dalda değişiklik olduğunda çalıştır
   pull_request:
     branches:
-      - main  # Ana dalda açılan her pull request için
+      - main  # Ana dalda pull request olduğunda çalıştır
 
 jobs:
-  build:
+  run-cors-anywhere:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-
       - name: Install dependencies
         run: npm install
 
       - name: Start cors-anywhere server
-        run: npm start --prefix path/to/cors-anywhere
-
-      - name: Send POST request
         run: |
-          const fetch = require("node-fetch");
+          npm start &
+          echo "Waiting for server to start..."
+          sleep 10  # Serverın başlaması için bekleme süresi
 
-          // Giriş yapılacak URL ve parametreler
-          const corsAnywhereURL = "http://localhost:8080/"; // cors-anywhere URL'si
-          const loginURL = "https://200000.onlinetravian.com/login.php";
-          const kullaniciAdi = "hello";
-          const sifre = "hello123123";
-          const loginParams = "user=" + encodeURIComponent(kullaniciAdi) + "&pw=" + encodeURIComponent(sifre) + "&s2=Git&ft=a4";
+      - name: Test server
+        run: |
+          echo "Sending test request..."
+          curl -I http://localhost:8080/
 
-          // POST isteği gönderme
-          fetch(corsAnywhereURL + loginURL, {
-            method: "POST",
-            headers: {
-              "Content-type": "application/x-www-form-urlencoded",
-              "x-requested-with": "http://localhost:8080/" // cors-anywhere proxy için ekstra header
-            },
-            body: loginParams
-          })
-            .then(response => {
-              if (response.ok) {
-                console.log("Giriş başarılı!");
-                // Giriş başarılıysa istenilen işlemleri burada yapabilirsiniz
-              } else {
-                console.error("Giriş başarısız! Durum kodu: " + response.status);
-                throw new Error("Giriş başarısız!");
-              }
-            })
-            .catch(error => {
-              console.error("Giriş hatası:", error);
-            });
+      - name: Stop server
+        run: |
+          echo "Stopping server..."
+          npm stop
