@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Anywhere POST Example</title>
+    <script>
+        function loginUser() {
+            var xhr = new XMLHttpRequest();
+            var url = 'http://localhost:8080/https://vip7.ttwars.com/login.php'; // CORS Anywhere kullanarak istek gönderiyoruz
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        console.log('İstek başarılı:', xhr.responseText);
+                    } else {
+                        console.error('İstekte hata oluştu:', xhr.status);
+                    }
+                }
+            };
+            var params = 'name=selam&password=selam123123'; // Kullanıcı adı ve şifre
+            xhr.send(params);
+        }
+    </script>
+</head>
+<body>
+    <button onclick="loginUser()">Login</button>
+</body>
+</html>
