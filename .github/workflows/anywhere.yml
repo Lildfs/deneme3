@@ -3,7 +3,7 @@ name: Run CORS Anywhere Proxy
 on:
   push:
     branches:
-      - main  # veya kullanmak istediğiniz ana dal adı
+      - main  # veya kullanmak istediğiniz ana dal adıı
 
 jobs:
   run-cors-anywhere:
