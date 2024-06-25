@@ -13,21 +13,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'  # Node.js sürümünü seçin (uygun bir sürüm)
+          node-version: '14'
 
       - name: Install dependencies
-        run: npm install  # package.json içindeki bağımlılıkları yükler
+        run: npm install
 
-      - name: Set environment variables
-        env:
-          HOST: '0.0.0.0'  # Opsiyonel olarak HOST değerini ayarlayabilirsiniz
-          PORT: 8080  # Opsiyonel olarak PORT değerini ayarlayabilirsiniz
-          CORSANYWHERE_BLACKLIST: ''  # Opsiyonel olarak CORSANYWHERE_BLACKLIST değerini ayarlayabilirsiniz
-          CORSANYWHERE_WHITELIST: ''  # Opsiyonel olarak CORSANYWHERE_WHITELIST değerini ayarlayabilirsiniz
-          CORSANYWHERE_RATELIMIT: '100'  # Opsiyonel olarak CORSANYWHERE_RATELIMIT değerini ayarlayabilirsiniz
-
-      - name: Start CORS Anywhere Proxy
-        run: node server.js  # server.js dosyasını başlatır
+      - name: Set environment variables and start CORS Anywhere
+        run: |
+          export HOST='0.0.0.0'  # Opsiyonel olarak HOST değerini ayarlayabilirsiniz
+          export PORT=8080  # Opsiyonel olarak PORT değerini ayarlayabilirsiniz
+          export CORSANYWHERE_BLACKLIST=''  # Opsiyonel olarak CORSANYWHERE_BLACKLIST değerini ayarlayabilirsiniz
+          export CORSANYWHERE_WHITELIST=''  # Opsiyonel olarak CORSANYWHERE_WHITELIST değerini ayarlayabilirsiniz
+          export CORSANYWHERE_RATELIMIT='100'  # Opsiyonel olarak CORSANYWHERE_RATELIMIT değerini ayarlayabilirsiniz
+          node server.js
