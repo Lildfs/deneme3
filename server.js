@@ -1,25 +1,82 @@
-// Listen on a specific host via the HOST environment variable
-var host = process.env.HOST || '0.0.0.0';
-// Listen on a specific port via the PORT environment variable
-var port = process.env.PORT || 8080;
+const http = require('http');
+const url = require('url');
+const queryString = require('querystring');
 
-// Grab the blacklist from the command-line so that we can update the blacklist without deploying
-// again. CORS Anywhere is open by design, and this blacklist is not used, except for countering
-// immediate abuse (e.g. denial of service). If you want to block all origins except for some,
-// use originWhitelist instead.
-var originBlacklist = parseEnvList(process.env.CORSANYWHERE_BLACKLIST);
-var originWhitelist = parseEnvList(process.env.CORSANYWHERE_WHITELIST);
-function parseEnvList(env) {
-  if (!env) {
-    return [];
-  }
-  return env.split(',');
+const host = process.env.HOST || '0.0.0.0';
+const port = process.env.PORT || 8080;
+
+const cors_proxy = require('./lib/cors-anywhere');
+
+// Middleware to log incoming requests
+function logRequest(req, res, next) {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
 }
 
-// Set up rate-limiting to avoid abuse of the public CORS Anywhere server.
-var checkRateLimit = require('./lib/rate-limit')(process.env.CORSANYWHERE_RATELIMIT);
+const server = http.createServer((req, res) => {
+  // Parse the request URL
+  const requestUrl = url.parse(req.url);
 
-var cors_proxy = require('./lib/cors-anywhere');
+  // Apply middleware to log all requests
+  logRequest(req, res, () => {
+    // Handle POST requests to '/dorf1.php'
+    if (req.method === 'POST' && requestUrl.pathname === '/dorf1.php') {
+      handlePostRequest(req, res);
+    } else {
+      // Handle other requests or send 404
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('404 Not Found\n');
+    }
+  });
+});
+
+// Function to handle POST requests to '/dorf1.php'
+function handlePostRequest(req, res) {
+  let requestBody = '';
+
+  req.on('data', function(data) {
+    requestBody += data;
+  });
+
+  req.on('end', function() {
+    // Parse POST request body
+    const postData = queryString.parse(requestBody);
+
+    // Log the received POST data (optional)
+    console.log('Received POST data:', postData);
+
+    // Forward POST request to the actual endpoint ('https://vip7.ttwars.com/dorf1.php')
+    let options = {
+      hostname: 'vip7.ttwars.com',
+      path: '/dorf1.php',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(requestBody)
+      }
+    };
+
+    // Make the request
+    let proxyReq = http.request(options, function(proxyRes) {
+      // Forward the response from the actual endpoint to the client
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res, { end: true });
+    });
+
+    // Handle errors
+    proxyReq.on('error', function(err) {
+      console.error('Proxy request failed:', err);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('500 Internal Server Error\n');
+    });
+
+    // Write request body data to the actual request
+    proxyReq.write(requestBody);
+    proxyReq.end();
+  });
+}
+
+// Start the CORS Anywhere server
 cors_proxy.createServer({
   originBlacklist: originBlacklist,
   originWhitelist: originWhitelist,
@@ -45,5 +102,5 @@ cors_proxy.createServer({
     xfwd: false,
   },
 }).listen(port, host, function() {
-  console.log('Running CORS Anywhere on ' + host + ':' + port);
+  console.log(`Running CORS Anywhere on ${host}:${port}`);
 });
