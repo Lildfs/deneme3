@@ -28,7 +28,6 @@ cors_proxy.createServer({
   removeHeaders: [
     'cookie',
     'cookie2',
-    'x-request-start',
     'via',
     'connect-time',
     'total-route-time'
